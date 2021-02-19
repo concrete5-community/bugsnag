@@ -19,7 +19,8 @@ class Bugsnag extends DashboardPageController
         $this->set('apiKey', $apiKey);
 
         $this->set('logLevels', $this->getLogLevels());
-        $this->set('logLevel', $config->get('bugsnag.log_level'));
+        $this->set('logLevel', (int) $config->get('bugsnag.log_level'));
+        $this->set('enableJavaScriptErrorDetection', (bool) $config->get('bugsnag.enable_javascript_error_detection'));
     }
 
     public function save()
@@ -31,7 +32,9 @@ class Bugsnag extends DashboardPageController
         }
 
         $config = $this->app->make(Repository::class);
-        $config->save('bugsnag.api_key', trim($this->request('apiKey')));
+
+        $config->save('bugsnag.api_key', trim($this->post('apiKey')));
+        $config->save('bugsnag.enable_javascript_error_detection', (bool) $this->post('enableJavaScriptErrorDetection'));
 
         if (array_key_exists($this->post('logLevel'), $this->getLogLevels())) {
             $config->save('bugsnag.log_level', (int) $this->post('logLevel'));

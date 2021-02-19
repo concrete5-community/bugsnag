@@ -30,6 +30,25 @@ defined('C5_EXECUTE') or die('Access Denied.');
             ?>
         </div>
 
+        <div class="form-group well">
+            <label>
+                <?php
+                /** @var $enableJavaScriptErrorDetection bool */
+                echo $form->checkbox('enableJavaScriptErrorDetection', 1, $enableJavaScriptErrorDetection);
+                ?>
+                <?php echo t('Enable JavaScript error detection'); ?>
+            </label>
+
+            <p style="margin-bottom: 0;">
+                <?php
+                echo t('Automatically detect JavaScript errors on your websites, collect detailed diagnostic information, and get notified about errors in real-time.');
+                ?><br>
+                <?php
+                echo t('By enabling JavaScript error detection, a single script tag will be added to your HTML output.');
+                ?>
+            </p>
+        </div>
+
         <?php
         echo $form->submit('submit', t('Save'), ['class' => 'btn-primary']);
         ?>

@@ -12,12 +12,13 @@ use Concrete\Core\Support\Facade\Package as PackageFacade;
 use Exception;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
+use Symfony\Component\EventDispatcher\GenericEvent;
 
 class Controller extends Package
 {
     protected $pkgHandle = 'bugsnag';
     protected $appVersionRequired = '8.0';
-    protected $pkgVersion = '1.2';
+    protected $pkgVersion = '1.3';
     protected $pkgAutoloaderRegistries = [
         'src/Bugsnag' => '\A3020\Bugsnag',
     ];
@@ -75,6 +76,17 @@ class Controller extends Package
 
             return $logger;
         });
+
+        if ($config->get('bugsnag.enable_javascript_error_detection')) {
+            $apiKey = $bugsnag->getConfig()->getApiKey();
+            Events::addListener('on_header_required_ready', function($event) use ($apiKey) {
+                /** @var GenericEvent $event */
+                $linkTags = $event->getArgument('linkTags');
+                $linkTags[] = '<script src="//d2wy8f7a9ursnm.cloudfront.net/bugsnag-3.min.js"'.
+                    'data-apikey="'.$apiKey.'"></script>';
+                $event->setArgument('linkTags', $linkTags);
+            });
+        }
     }
 
     /**
