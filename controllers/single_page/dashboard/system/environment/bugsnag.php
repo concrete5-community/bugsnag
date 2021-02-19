@@ -3,6 +3,7 @@
 namespace Concrete\Package\Bugsnag\Controller\SinglePage\Dashboard\System\Environment;
 
 use Concrete\Core\Config\Repository\Repository;
+use Concrete\Core\Logging\Logger;
 use Concrete\Core\Page\Controller\DashboardPageController;
 
 class Bugsnag extends DashboardPageController
@@ -16,6 +17,9 @@ class Bugsnag extends DashboardPageController
 
         $this->set('token', $token);
         $this->set('apiKey', $apiKey);
+
+        $this->set('logLevels', $this->getLogLevels());
+        $this->set('logLevel', $config->get('bugsnag.log_level'));
     }
 
     public function save()
@@ -29,7 +33,19 @@ class Bugsnag extends DashboardPageController
         $config = $this->app->make(Repository::class);
         $config->save('bugsnag.api_key', trim($this->request('apiKey')));
 
-        $this->flash('success', t('API key has been updated.'));
+        if (array_key_exists($this->post('logLevel'), $this->getLogLevels())) {
+            $config->save('bugsnag.log_level', (int) $this->post('logLevel'));
+        }
+
+        $this->flash('success', t('Your settings have been saved.'));
         $this->redirect('/dashboard/system/environment/bugsnag');
+    }
+
+    /**
+     * @return array level codes => level names
+     */
+    protected function getLogLevels()
+    {
+        return array_flip(Logger::getLevels());
     }
 }

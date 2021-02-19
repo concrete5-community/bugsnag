@@ -2,6 +2,7 @@
 
 namespace Concrete\Package\Bugsnag;
 
+use A3020\Bugsnag\Logging\Handler\BugsnagHandler;
 use Concrete\Core\Config\Repository\Repository;
 use Concrete\Core\Package\Package;
 use Concrete\Core\Page\Page;
@@ -9,12 +10,17 @@ use Concrete\Core\Page\Single;
 use Concrete\Core\Support\Facade\Events;
 use Concrete\Core\Support\Facade\Package as PackageFacade;
 use Exception;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Logger;
 
 class Controller extends Package
 {
     protected $pkgHandle = 'bugsnag';
     protected $appVersionRequired = '8.0';
-    protected $pkgVersion = '1.0';
+    protected $pkgVersion = '1.2';
+    protected $pkgAutoloaderRegistries = [
+        'src/Bugsnag' => '\A3020\Bugsnag',
+    ];
 
     public function getPackageName()
     {
@@ -42,19 +48,57 @@ class Controller extends Package
             $bugsnag = \Bugsnag\Client::make($apiKey);
             \Bugsnag\Handler::register($bugsnag);
 
-            Events::addListener('on_exception', function($event) use($bugsnag) {
-                $bugsnag->notifyException($event->getSubject());
-            });
+            $this->registerListeners($bugsnag, $config);
         } catch (Exception $e) {
             $log = $this->app->make('log/exceptions');
             $log->addError('Bugsnag: '. $e->getMessage());
         }
     }
 
+    /**
+     * @param $bugsnag \Bugsnag\Client
+     * @param Repository $config
+     */
+    private function registerListeners($bugsnag, $config)
+    {
+        Events::addListener('on_exception', function($event) use($bugsnag) {
+            $bugsnag->notifyException($event->getSubject());
+        });
+
+        $handler = $this->getBugsnagHandler($config->get('bugsnag.log_level'));
+        $handler->setBugsnag($bugsnag);
+
+        Events::addListener('on_logger_create', function($event) use ($handler) {
+            /** @var \Concrete\Core\Logging\Event $event */
+            $logger = $event->getLogger();
+            $logger->pushHandler($handler);
+
+            return $logger;
+        });
+    }
+
+    /**
+     * @param int $logLevel The minimum logging level at which this handler will be triggered
+     * @return BugsnagHandler
+     */
+    private function getBugsnagHandler($logLevel = Logger::DEBUG)
+    {
+        /** @var BugsnagHandler $handler */
+        $handler = new BugsnagHandler($logLevel);
+        $output = "%message%";
+        $formatter = new LineFormatter($output, null, true);
+        $handler->setFormatter($formatter);
+
+        return $handler;
+    }
+
     public function install()
     {
         $pkg = parent::install();
         $this->installPage($pkg);
+
+        $config = $this->app->make(Repository::class);
+        $config->save('bugsnag.log_level', Logger::ERROR);
     }
 
     public function uninstall()
@@ -63,6 +107,7 @@ class Controller extends Package
 
         $config = $this->app->make(Repository::class);
         $config->clear('bugsnag.api_key');
+        $config->clear('bugsnag.log_level');
     }
 
     public function upgrade()
