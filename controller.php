@@ -14,7 +14,7 @@ class Controller extends Package
 {
     protected $pkgHandle = 'bugsnag';
     protected $appVersionRequired = '8.0';
-    protected $pkgVersion = '0.9.2';
+    protected $pkgVersion = '1.0';
 
     public function getPackageName()
     {
