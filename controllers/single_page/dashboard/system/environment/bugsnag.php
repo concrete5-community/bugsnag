@@ -3,8 +3,8 @@
 namespace Concrete\Package\Bugsnag\Controller\SinglePage\Dashboard\System\Environment;
 
 use Concrete\Core\Config\Repository\Repository;
-use Concrete\Core\Logging\Logger;
 use Concrete\Core\Page\Controller\DashboardPageController;
+use Monolog\Logger;
 
 class Bugsnag extends DashboardPageController
 {

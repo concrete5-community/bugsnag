@@ -18,7 +18,7 @@ class Controller extends Package
 {
     protected $pkgHandle = 'bugsnag';
     protected $appVersionRequired = '8.0';
-    protected $pkgVersion = '1.3';
+    protected $pkgVersion = '1.3.1';
     protected $pkgAutoloaderRegistries = [
         'src/Bugsnag' => '\A3020\Bugsnag',
     ];
